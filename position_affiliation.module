@@ -5,7 +5,7 @@
  * Defines a simple position_affiliation field type.
  */
 
-//based upon the db table `taxonomy_vocabulary` 
+//the primary key ("vid") of taxonomy list based upon the db table `taxonomy_vocabulary` 
 define('IBS_POSITION_VID', 10);
 define('IBS_AFFILIATION_VID', 4);
 
@@ -112,6 +112,9 @@ function position_affiliation_field_widget_info() {
 function position_affiliation_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $base = $element;
 
+  //Add javascript that allows show date to toggle the view
+  drupal_add_js(drupal_get_path('module', 'position_affiliation') .'/position_affiliation.js');
+
   if($instance['widget']['type']  == 'position_affiliation_form') {
     $format = 'Y-m-d';
     $element['position'] = array(
@@ -137,40 +140,23 @@ function position_affiliation_field_widget_form(&$form, &$form_state, $field, $i
       '#title' => t('Start date'),
       '#default_value' => isset($items[$delta]['start_date'])? default_date($items[$delta]['start_date']): NULL,
     );
-    $element['show_end_date'] = array(
+    $element['end_date_show'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enter End Date?'),
-      //'#default_value' => isset($items[$delta]['end_date']) ? 1 : 0,
+      '#attributes' => array(
+          'class' => array('end_date_show'),
+        ),
+      '#default_value' => isset($items[$delta]['end_date']) ? $items[$delta]['end_date'] : 0,
     );
+
     $element['end_date'] = array(
       '#type' => 'date',
       '#title' => t('End date'),
+      '#attributes' => array(
+          'class' => array('end_date'),
+        ),
       '#default_value' => isset($items[$delta]['end_date'])? default_date($items[$delta]['end_date']): NULL,
-      '#states' => array(
-        'invisible' => array(
-          '#edit-field-position-affiliation-und-0-show-end-date' => array('checked' => TRUE),
-        ),
-      ),
     );
-    $element['toggle_me'] = array(
-      '#type' => 'radios',
-      '#title' => t('select "type" to type'),
-      '#options' => array(
-        'type' => t('type'),
-        'no-type' => t('no type'),
-      ),
-      '#defaut_value' => 'type'
-    );
-    $element['settings'] = array(
-      '#type' => 'textfield',
-      '#states' => array(
-        // Only show this field when the 'toggle_me' checkbox is enabled.
-        'disabled' => array(
-          '#edit-field-position-affiliation-und-0-toggle-me' => array('value' => 'type'),
-        ),
-      ),
-    );
-
     // $element['start_date'] = array(
     //   '#type' => 'textfield',
     //   '#title' => t('Start date (mm/dd/yyyy)'),
