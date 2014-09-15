@@ -1,0 +1,9 @@
+name = Position and Affiliation
+description = custom module written for IBS which groups the position and affiliation of personnel
+package = IBS Custom Module
+core = 7.x
+dependencies = field_ui
+
+files[] = position_affiliation.module
+
+

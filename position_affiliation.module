@@ -1,0 +1,277 @@
+<?php
+
+/**
+ * @file
+ * Defines a simple position_affiliation field type.
+ */
+
+//based upon the db table `taxonomy_vocabulary` 
+define('IBS_POSITION_VID', 10);
+define('IBS_AFFILIATION_VID', 4);
+
+/**
+ * Implements hook_field_info().
+ */
+function position_affiliation_field_info() {
+  return array(
+    'position_affiliation' => array(
+      'label' => t('Position and Affiliation'),
+      'description' => t('The Position of Affiliation of Personnel'),
+      'default_widget' => 'position_affiliation_form',
+      'default_formatter' => 'position_affiliation_default',
+    ),
+  );
+}
+
+function position_affiliation_field_schema($field){
+  //return the $field array (already initialized) with columns, indexes, and foreign keys working
+  //This builds the table in the database (only when an object is created, I think?)
+  //https://api.drupal.org/api/drupal/modules!field!field.api.php/function/hook_field_schema/7
+  if($field['type'] == 'position_affiliation'){
+    $schema["columns"] = array(
+      'position' => array(
+        'description' => 'tid of ibs_position',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'affiliation' => array(
+        'description' => 'tid for ibs_affilitaion',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'start_date' => array(
+        'description' => 'The start date for a position',
+        'type' => 'varchar',
+        'mysql_type' => 'date',
+        'not null' => FALSE,  //CHANGE WHEN I GET IT FIGURED OUT
+      ),
+      'end_date' => array(
+        'description' => 'The end date for a position',
+        'type' => 'varchar',
+        'mysql_type' => 'date',
+        'not null' => FALSE,
+      ),
+    );
+    return $schema;
+  }
+ }
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function position_affiliation_field_is_empty($item, $field) {
+  if($field['type'] == 'position_affiliation'){
+    return ($item['position'] == 0 && $item['affiliation'] == 0);
+  }
+  return FALSE; 
+}
+
+/**
+  * Implements hook_field_validate
+  * Not sure if I need to implement this.
+  */
+// function position_affiliation_field_validate($obj_type, $object, $field, $instance, $langcode, $items, &$errors){
+  
+// }
+
+function position_affiliation_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items){
+  if( $field['type'] == 'position_affiliation'){ 
+    foreach($items as $delta => $item) {
+        $items[$delta]['start_date'] = date("Y-m-d", mktime(0,0,0, 
+          $items[$delta]['start_date']['month'], 
+          $items[$delta]['start_date']['day'], 
+          $items[$delta]['start_date']['year']));
+        $items[$delta]['end_date'] = date("Y-m-d", mktime(0,0,0, 
+          $items[$delta]['end_date']['month'],
+          $items[$delta]['end_date']['day'], 
+          $items[$delta]['end_date']['year']));
+    }
+  }
+}
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function position_affiliation_field_widget_info() {
+  return array(
+    'position_affiliation_form' => array(
+      'label' => t('Position and Affiliation Form'),
+      'field types' => array('position_affiliation'),
+      'behaviors' => array(
+        'multiple values' => FIELD_BEHAVIOR_DEFAULT,
+        'default value' => FIELD_BEHAVIOR_NONE,
+      ),
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function position_affiliation_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $base = $element;
+
+  if($instance['widget']['type']  == 'position_affiliation_form') {
+    $format = 'Y-m-d';
+    $element['position'] = array(
+      '#type' => 'select',
+      '#title' => t('Position'),
+      '#default_value' => isset($items[$delta]['position']) ? $items[$delta]['position'] : NULL,
+      '#options' => taxonomy_search(IBS_POSITION_VID, "IBS Position"),
+    );
+
+    $element['affiliation'] = array(
+      '#type' => 'select',
+      '#title' => t('Affiliation'),
+      '#default_value' => isset($items[$delta]['affiliation']) ? $items[$delta]['affiliation'] : NULL,
+      '#options' => taxonomy_search(IBS_AFFILIATION_VID, "IBS Affiliation"),
+    );
+    //This is the format of start date
+    // $items[0]['start_date'] = array[3]
+    //   $items[0]['start_date']['month'] = (string) 9
+    //   $items[0]['start_date']['day'] = (string) 11
+    //   $items[0]['start_date']['year'] = (string) 2014
+    $element['start_date'] = array(
+      '#type' => 'date',
+      '#title' => t('Start date'),
+      '#default_value' => isset($items[$delta]['start_date'])? default_date($items[$delta]['start_date']): NULL,
+    );
+    $element['show_end_date'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enter End Date?'),
+      //'#default_value' => isset($items[$delta]['end_date']) ? 1 : 0,
+    );
+    $element['end_date'] = array(
+      '#type' => 'date',
+      '#title' => t('End date'),
+      '#default_value' => isset($items[$delta]['end_date'])? default_date($items[$delta]['end_date']): NULL,
+      '#states' => array(
+        'invisible' => array(
+          '#edit-field-position-affiliation-und-0-show-end-date' => array('checked' => TRUE),
+        ),
+      ),
+    );
+    $element['toggle_me'] = array(
+      '#type' => 'radios',
+      '#title' => t('select "type" to type'),
+      '#options' => array(
+        'type' => t('type'),
+        'no-type' => t('no type'),
+      ),
+      '#defaut_value' => 'type'
+    );
+    $element['settings'] = array(
+      '#type' => 'textfield',
+      '#states' => array(
+        // Only show this field when the 'toggle_me' checkbox is enabled.
+        'disabled' => array(
+          '#edit-field-position-affiliation-und-0-toggle-me' => array('value' => 'type'),
+        ),
+      ),
+    );
+
+    // $element['start_date'] = array(
+    //   '#type' => 'textfield',
+    //   '#title' => t('Start date (mm/dd/yyyy)'),
+    //   '#default_value' => isset($items[$delta]['start_date']) ? $items[$delta]['start_date'] : NULL,
+    // );
+    // 
+    // $element['end_date'] = array(
+    //   '#type' => 'textfield',
+    //   '#title' => t('End date (mm/dd/yyyy)'),
+    //   '#default_value' => isset($items[$delta]['end_date']) ? $items[$delta]['end_date'] : NULL,
+    //   '#states' => array(
+    //     'visible' => array(
+    //       ':input[name="show_end_date"]' => array('value' => "1"),
+    //     ),
+    //   ),
+    //);
+  }
+  return $element;
+}
+
+
+
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function position_affiliation_field_formatter_info() {
+  return array(
+    'position_affiliation_default' => array(
+      'label' => t('Default'),
+      'field types' => array('position_affiliation'),
+    ),
+    'position_affiliation_profile' => array(
+      'label' => t('Profile'),
+      'field types' => array('position_affiliation'),
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function position_affiliation_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array(); 
+  $settings = $display['settings'];
+  switch($display['type']){
+    case 'position_affiliation_default':
+      foreach ($items as $delta => $item) {
+        $element[$delta]["#markup"] = '';
+        foreach($item as $key => $value){
+          $output ="<div>". $key ."</div>" . "<div>". $value ."</div>";
+          $element[$delta]["#markup"] .= $output;
+        }
+      }
+      break;
+    case 'position_affiliation_profile':
+      foreach ($items as $delta => $item) {
+        $position_obj = taxonomy_term_load($item['position']);
+        $affiliation_obj = taxonomy_term_load($item['affiliation']);
+        $output = t('@position, ', array(
+          '@position' => $position_obj->name,   
+        ));
+        $output .= l($affiliation_obj->name, $affiliation_obj->description);
+        $element[$delta] = array('#markup' => $output);
+      }
+      break;
+  }
+  return $element;
+}
+
+function taxonomy_search($vid, $readable_type) {
+  // Use the Database API to retrieve our data.
+  // @see http://drupal.org/node/310069
+
+  //  Example return from taxonomy_get_tree($vid)
+  // $test[2] = stdClass[8]
+  //   $test[2]->tid = (string) 27
+  //   $test[2]->vid = (string) 4
+  //   $test[2]->name = (string) Environment and Society
+  //   $test[2]->description = (string) http://www.colorado.edu/ibs/eb/
+  //   $test[2]->format = (string) filtered_html
+  //   $test[2]->weight = (string) 2
+  //   $test[2]->depth = (int) 0
+  //   $test[2]->parents = array[1]
+  //     $test[2]->parents[0] = (string) 0
+  $terms = taxonomy_get_tree($vid);
+
+
+  $items = array();
+  $items[0] = '--Please select ' . $readable_type. '--';
+  foreach ($terms as $term) {
+    $items[$term->tid] = $term->name;
+  }
+  return $items;
+}
+
+function default_date($date_str){
+  $time = strtotime($date_str);
+  return array('year' => intval(date("Y", $time)),
+    'month' => intval(date("m", $time)),
+    'day' => intval(date("d", $time)),
+    );
+}
