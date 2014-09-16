@@ -42,13 +42,13 @@ function position_affiliation_field_schema($field){
       'start_date' => array(
         'description' => 'The start date for a position',
         'type' => 'varchar',
-        'mysql_type' => 'date',
+        'mysql_type' => 'datetime',
         'not null' => FALSE,  //CHANGE WHEN I GET IT FIGURED OUT
       ),
       'end_date' => array(
         'description' => 'The end date for a position',
         'type' => 'varchar',
-        'mysql_type' => 'date',
+        'mysql_type' => 'datetime',
         'not null' => FALSE,
       ),
     );
@@ -206,13 +206,15 @@ function position_affiliation_field_formatter_view($entity_type, $entity, $field
       break;
     case 'position_affiliation_profile':
       foreach ($items as $delta => $item) {
-        $position_obj = taxonomy_term_load($item['position']);
-        $affiliation_obj = taxonomy_term_load($item['affiliation']);
-        $output = t('@position, ', array(
-          '@position' => $position_obj->name,   
-        ));
-        $output .= l($affiliation_obj->name, $affiliation_obj->description);
-        $element[$delta] = array('#markup' => $output);
+        if($item['end_date'] == NULL){
+          $position_obj = taxonomy_term_load($item['position']);
+          $affiliation_obj = taxonomy_term_load($item['affiliation']);
+          $output = t('@position, ', array(
+            '@position' => $position_obj->name,   
+          ));
+          $output .= l($affiliation_obj->name, $affiliation_obj->description);
+          $element[$delta] = array('#markup' => $output);
+        }
       }
       break;
   }

@@ -1,5 +1,5 @@
 name = Position and Affiliation
-description = custom module written for IBS which groups the position and affiliation of personnel
+description = Field for Position, Affiliation, and Start/End date of appointment, for IBS personnel
 package = IBS Custom Module
 core = 7.x
 dependencies = field_ui
