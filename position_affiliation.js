@@ -9,7 +9,14 @@
 				} else {
 					jQuery(this).parent().parent().find(".end_date").parent().hide();
 				}
-			});			
+			});
+			$('.end_date_show', context).each(function(){
+				if( jQuery(this).is(':checked')) {
+					jQuery(this).parent().parent().find(".end_date").parent().show();
+				} else {
+					jQuery(this).parent().parent().find(".end_date").parent().hide();
+				}
+			})	
 		}
 	};
 }) (jQuery);

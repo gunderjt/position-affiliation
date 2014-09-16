@@ -77,14 +77,18 @@ function position_affiliation_field_is_empty($item, $field) {
 function position_affiliation_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items){
   if( $field['type'] == 'position_affiliation'){ 
     foreach($items as $delta => $item) {
-        $items[$delta]['start_date'] = date("Y-m-d", mktime(0,0,0, 
-          $items[$delta]['start_date']['month'], 
-          $items[$delta]['start_date']['day'], 
-          $items[$delta]['start_date']['year']));
+      $items[$delta]['start_date'] = date("Y-m-d", mktime(0,0,0, 
+        $items[$delta]['start_date']['month'], 
+        $items[$delta]['start_date']['day'], 
+        $items[$delta]['start_date']['year']));
+      if($items[$delta]['end_date_show']){
         $items[$delta]['end_date'] = date("Y-m-d", mktime(0,0,0, 
           $items[$delta]['end_date']['month'],
           $items[$delta]['end_date']['day'], 
           $items[$delta]['end_date']['year']));
+      } else {
+        $items[$delta]['end_date'] = NULL;
+      }
     }
   }
 }
@@ -146,8 +150,11 @@ function position_affiliation_field_widget_form(&$form, &$form_state, $field, $i
       '#attributes' => array(
           'class' => array('end_date_show'),
         ),
-      '#default_value' => isset($items[$delta]['end_date']) ? $items[$delta]['end_date'] : 0,
     );
+    //If end_date is defined add a check to the end_date_show attribute
+    if(isset($items[$delta]['end_date']) ? ($items[$delta]['end_date'] ? TRUE : FALSE) : FALSE){
+      $element['end_date_show']['#attributes']['checked'] = 'checked';
+    }
 
     $element['end_date'] = array(
       '#type' => 'date',
@@ -157,22 +164,6 @@ function position_affiliation_field_widget_form(&$form, &$form_state, $field, $i
         ),
       '#default_value' => isset($items[$delta]['end_date'])? default_date($items[$delta]['end_date']): NULL,
     );
-    // $element['start_date'] = array(
-    //   '#type' => 'textfield',
-    //   '#title' => t('Start date (mm/dd/yyyy)'),
-    //   '#default_value' => isset($items[$delta]['start_date']) ? $items[$delta]['start_date'] : NULL,
-    // );
-    // 
-    // $element['end_date'] = array(
-    //   '#type' => 'textfield',
-    //   '#title' => t('End date (mm/dd/yyyy)'),
-    //   '#default_value' => isset($items[$delta]['end_date']) ? $items[$delta]['end_date'] : NULL,
-    //   '#states' => array(
-    //     'visible' => array(
-    //       ':input[name="show_end_date"]' => array('value' => "1"),
-    //     ),
-    //   ),
-    //);
   }
   return $element;
 }
