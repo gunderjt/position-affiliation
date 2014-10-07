@@ -2,7 +2,8 @@ name = Position and Affiliation
 description = Field for Position, Affiliation, and Start/End date of appointment, for IBS personnel
 package = IBS Custom Module
 core = 7.x
-dependencies = field_ui
+dependencies[] = field_ui
+dependencies[] = ibs_custom_field_api
 
 files[] = position_affiliation.module
 

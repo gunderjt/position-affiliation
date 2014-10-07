@@ -5,10 +5,6 @@
  * Defines a simple position_affiliation field type.
  */
 
-//the primary key ("vid") of taxonomy list based upon the db table `taxonomy_vocabulary` 
-define('IBS_POSITION_VID', 10);
-define('IBS_AFFILIATION_VID', 4);
-
 /**
  * Implements hook_field_info().
  */
@@ -125,20 +121,20 @@ function position_affiliation_field_widget_form(&$form, &$form_state, $field, $i
       '#type' => 'select',
       '#title' => t('Position'),
       '#default_value' => isset($items[$delta]['position']) ? $items[$delta]['position'] : NULL,
-      '#options' => taxonomy_search(IBS_POSITION_VID, "IBS Position"),
+      '#options' => taxonomy_search(IBS_POSITION_VID, "IBS Position"), //IBS_POSITION_VID taxonomy_search() is defined in ibs_custom_field_api module
     );
 
     $element['affiliation'] = array(
       '#type' => 'select',
       '#title' => t('Affiliation'),
       '#default_value' => isset($items[$delta]['affiliation']) ? $items[$delta]['affiliation'] : NULL,
-      '#options' => taxonomy_search(IBS_AFFILIATION_VID, "IBS Affiliation"),
+      '#options' => taxonomy_search(IBS_AFFILIATION_VID, "IBS Affiliation"), //IBS_AFFILIATION_VID taxonomy_search() is defined in ibs_custom_field_api module
     );
     //This is the format of start date
-    // $items[0]['start_date'] = array[3]
-    //   $items[0]['start_date']['month'] = (string) 9
-    //   $items[0]['start_date']['day'] = (string) 11
-    //   $items[0]['start_date']['year'] = (string) 2014
+    // $items[delta]['start_date'] = array[3]
+    //   $items[delta]['start_date']['month'] = (string) 9
+    //   $items[delfta]['start_date']['day'] = (string) 11
+    //   $items[delta]['start_date']['year'] = (string) 2014
     $element['start_date'] = array(
       '#type' => 'date',
       '#title' => t('Start date'),
@@ -167,9 +163,6 @@ function position_affiliation_field_widget_form(&$form, &$form_state, $field, $i
   }
   return $element;
 }
-
-
-
 
 /**
  * Implements hook_field_formatter_info().
@@ -212,7 +205,13 @@ function position_affiliation_field_formatter_view($entity_type, $entity, $field
           $output = t('@position, ', array(
             '@position' => $position_obj->name,   
           ));
-          $output .= l($affiliation_obj->name, $affiliation_obj->description);
+          if (!empty($affiliation_obj->field_url)){
+            foreach($affiliation_obj->field_url['und'] as $url_delta => $url){
+              $output .= l($affiliation_obj->name, $url['safe_value']);
+            }
+          } else{
+            $output .= $affiliation_obj->name;
+          }
           $element[$delta] = array('#markup' => $output);
         }
       }
@@ -221,31 +220,6 @@ function position_affiliation_field_formatter_view($entity_type, $entity, $field
   return $element;
 }
 
-function taxonomy_search($vid, $readable_type) {
-  // Use the Database API to retrieve our data.
-  // @see http://drupal.org/node/310069
-
-  //  Example return from taxonomy_get_tree($vid)
-  // $test[2] = stdClass[8]
-  //   $test[2]->tid = (string) 27
-  //   $test[2]->vid = (string) 4
-  //   $test[2]->name = (string) Environment and Society
-  //   $test[2]->description = (string) http://www.colorado.edu/ibs/eb/
-  //   $test[2]->format = (string) filtered_html
-  //   $test[2]->weight = (string) 2
-  //   $test[2]->depth = (int) 0
-  //   $test[2]->parents = array[1]
-  //     $test[2]->parents[0] = (string) 0
-  $terms = taxonomy_get_tree($vid);
-
-
-  $items = array();
-  $items[0] = '--Please select ' . $readable_type. '--';
-  foreach ($terms as $term) {
-    $items[$term->tid] = $term->name;
-  }
-  return $items;
-}
 
 function default_date($date_str){
   $time = strtotime($date_str);
