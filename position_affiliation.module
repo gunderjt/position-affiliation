@@ -177,6 +177,10 @@ function position_affiliation_field_formatter_info() {
       'label' => t('Profile'),
       'field types' => array('position_affiliation'),
     ),
+    'position_affiliation_bod' => array(
+      'label' => t('Board of Directors'),
+      'field types' => array('position_affiliation'),
+    ),
   );
 }
 
@@ -200,6 +204,25 @@ function position_affiliation_field_formatter_view($entity_type, $entity, $field
     case 'position_affiliation_profile':
       foreach ($items as $delta => $item) {
         if($item['end_date'] == NULL){
+          $position_obj = taxonomy_term_load($item['position']);
+          $affiliation_obj = taxonomy_term_load($item['affiliation']);
+          $output = t('@position, ', array(
+            '@position' => $position_obj->name,   
+          ));
+          if (!empty($affiliation_obj->field_url)){
+            foreach($affiliation_obj->field_url['und'] as $url_delta => $url){
+              $output .= l($affiliation_obj->name, $url['safe_value']);
+            }
+          } else{
+            $output .= $affiliation_obj->name;
+          }
+          $element[$delta] = array('#markup' => $output);
+        }
+      }
+      break;
+    case 'position_affiliation_bod':
+      foreach ($items as $delta => $item) {
+        if(($item['end_date'] == NULL) && ($item['position'] == IBS_DIRECTOR_TID)){
           $position_obj = taxonomy_term_load($item['position']);
           $affiliation_obj = taxonomy_term_load($item['affiliation']);
           $output = t('@position, ', array(
